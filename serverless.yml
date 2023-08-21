@@ -1,0 +1,185 @@
+service: pinkman
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+  timeout: 10
+  region: ${param:region}
+  memorySize: ${param:memorySize}
+  apiGateway:
+    apiKeys:
+      - pinkman-${param:stageName}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:UpdateItem
+            - dynamodb:PutItem
+            - dynamodb:DeleteItem
+          Resource:
+            - !GetAtt CategoryTable.Arn
+            - !GetAtt ProductTable.Arn
+  environment:
+    STAGE_NAME: ${param:stageName}
+    CATEGORY_TABLE: !Ref CategoryTable
+    PRODUCT_TABLE: !Ref ProductTable
+
+# Stage parameters
+params:
+  # Values for the "prod" stage
+  production:
+    region: "us-east-1"
+    memorySize: "128"
+    stageName: "production"
+  # Values for the "dev" stage
+  development:
+    region: "us-east-2"
+    memorySize: "128" 
+    stageName: "development"
+
+package:
+  individually: true
+  patterns:
+    - '!node_modules/**'
+    - '!*.yml'
+    - '!*'
+
+functions:
+  getCategoryList:
+    handler: functions/api/category/getCategoryList.handler
+    package:
+      patterns:
+        - '**/getCategoryList.js'
+    events:
+      - http:
+          path: 'category'
+          method: get
+          cors: true
+
+  getCategory:
+    handler: functions/api/category/getCategory.handler
+    package:
+      patterns:
+        - '**/getCategory.js'
+    events:
+      - http:
+          path: 'category/{id}'
+          method: get
+          cors: true
+
+  createCategory:
+    handler: functions/api/category/createCategory.handler
+    package:
+      patterns:
+        - '**/createCategory.js'
+    events:
+      - http:
+          path: category
+          method: post
+          cors: true
+
+  updateCategory:
+    handler: functions/api/category/updateCategory.handler
+    package:
+      patterns:
+        - '**/updateCategory.js'
+    events:
+      - http:
+          path: '/category/{id}'
+          method: put
+          cors: true
+
+  deleteCategory:
+    handler: functions/api/category/deleteCategory.handler
+    package:
+      patterns:
+        - '**/deleteCategory.js'
+    events:
+      - http:
+          path: '/category/{id}'
+          method: delete
+          cors: true
+
+  getProductList:
+    handler: functions/api/product/getProductList.handler
+    package:
+      patterns:
+        - '**/getProductList.js'
+    events:
+      - http:
+          path: 'product'
+          method: get
+          cors: true
+
+  getProduct:
+    handler: functions/api/product/getProduct.handler
+    package:
+      patterns:
+        - '**/getProduct.js'
+    events:
+      - http:
+          path: 'product/{id}'
+          method: get
+          cors: true
+
+  createProduct:
+    handler: functions/api/product/createProduct.handler
+    package:
+      patterns:
+        - '**/createProduct.js'
+    events:
+      - http:
+          path: product
+          method: post
+          cors: true
+
+  updateProduct:
+    handler: functions/api/product/updateProduct.handler
+    package:
+      patterns:
+        - '**/updateProduct.js'
+    events:
+      - http:
+          path: '/product/{id}'
+          method: put
+          cors: true
+
+  deleteProduct:
+    handler: functions/api/product/deleteProduct.handler
+    package:
+      patterns:
+        - '**/deleteProduct.js'
+    events:
+      - http:
+          path: '/product/{id}'
+          method: delete    
+          cors: true   
+
+resources:
+  Resources:
+    CategoryTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+
+    ProductTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
