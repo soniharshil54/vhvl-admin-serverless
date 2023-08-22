@@ -7,11 +7,6 @@ provider:
   timeout: 10
   region: ${param:region}
   memorySize: ${param:memorySize}
-  cors:
-    origin: '*'
-  apiGateway:
-    apiKeys:
-      - pinkman-${param:stageName}
   iam:
     role:
       statements:
